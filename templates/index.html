@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to EV Battery Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        padding: 2rem;
+    }
+    
+    .hero-content {
+        max-width: 900px;
+        z-index: 2;
+        animation: fadeInUp 1s ease;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .hero h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: clamp(2.5rem, 8vw, 5rem);
+        font-weight: 900;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
+        letter-spacing: -2px;
+        animation: gradientShift 3s ease infinite;
+        background-size: 200% 200%;
+    }
+    
+    @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    .hero p {
+        font-size: 1.3rem;
+        color: var(--text-dim);
+        margin-bottom: 3rem;
+        animation: fadeInUp 1s ease 0.2s backwards;
+    }
+    
+    .cta-buttons {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        animation: fadeInUp 1s ease 0.4s backwards;
+    }
+    
+    .cta-buttons .btn {
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        border-radius: 12px;
+    }
+    
+    /* Floating particles */
+    .particles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 50%;
+        opacity: 0.3;
+        animation: float 20s infinite;
+    }
+    
+    .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 15s; }
+    .particle:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 18s; }
+    .particle:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 22s; }
+    .particle:nth-child(4) { left: 40%; animation-delay: 1s; animation-duration: 17s; }
+    .particle:nth-child(5) { left: 50%; animation-delay: 3s; animation-duration: 20s; }
+    .particle:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 19s; }
+    .particle:nth-child(7) { left: 70%; animation-delay: 2.5s; animation-duration: 21s; }
+    .particle:nth-child(8) { left: 80%; animation-delay: 4.5s; animation-duration: 16s; }
+    .particle:nth-child(9) { left: 90%; animation-delay: 1.5s; animation-duration: 23s; }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(100vh) scale(0);
+            opacity: 0;
+        }
+        10% {
+            opacity: 0.3;
+        }
+        90% {
+            opacity: 0.3;
+        }
+        100% {
+            transform: translateY(-100px) scale(1);
+        }
+    }
+    
+    /* Features section */
+    .features {
+        padding: 8rem 2rem;
+        background: linear-gradient(180deg, transparent, rgba(0, 255, 157, 0.03));
+    }
+    
+    .features h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 4rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .feature-card {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 157, 0.1);
+        border-radius: 20px;
+        padding: 2.5rem;
+        transition: all 0.4s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(0, 255, 157, 0.1), rgba(0, 212, 255, 0.1));
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 60px rgba(0, 255, 157, 0.2);
+    }
+    
+    .feature-card:hover::before {
+        opacity: 1;
+    }
+    
+    .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1.5rem;
+        display: block;
+    }
+    
+    .feature-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary);
+        position: relative;
+    }
+    
+    .feature-card p {
+        color: var(--text-dim);
+        line-height: 1.8;
+        position: relative;
+    }
+    
+    /* Stats section */
+    .stats {
+        padding: 6rem 2rem;
+        text-align: center;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 3rem;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .stat-item h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 3.5rem;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item p {
+        color: var(--text-dim);
+        font-size: 1.1rem;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        padding: 6rem 2rem;
+        background: linear-gradient(135deg, rgba(0, 255, 157, 0.05), rgba(0, 212, 255, 0.05));
+        text-align: center;
+    }
+    
+    .cta-section h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .cta-section p {
+        font-size: 1.2rem;
+        color: var(--text-dim);
+        margin-bottom: 3rem;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+        
+        .cta-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <div class="hero-content">
+        <h1>Power Your Future with Intelligent Battery Management</h1>
+        <p>Advanced AI-driven insights for EV battery health, performance optimization, and predictive maintenance. Take control of your electric vehicle's most critical component.</p>
+        
+        <div class="cta-buttons">
+            <a href="{{ url_for('register') }}" class="btn btn-primary">Start Free Trial</a>
+            <a href="#features" class="btn btn-secondary">Explore Features</a>
+        </div>
+    </div>
+</div>
+
+<section class="features" id="features">
+    <h2>Cutting-Edge Battery Intelligence</h2>
+    
+    <div class="feature-grid">
+        <div class="feature-card">
+            <span class="feature-icon">🔋</span>
+            <h3>Health Monitoring</h3>
+            <p>Real-time battery health analysis using advanced machine learning algorithms to predict degradation and optimize performance.</p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">📊</span>
+            <h3>Predictive Analytics</h3>
+            <p>AI-powered forecasting of Remaining Useful Life (RUL) to plan maintenance and maximize battery lifespan.</p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">⚡</span>
+            <h3>Smart Diagnostics</h3>
+            <p>Comprehensive battery state classification with actionable insights for optimal charging and usage patterns.</p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">📈</span>
+            <h3>Visual Analytics</h3>
+            <p>Interactive dashboards and charts to track battery performance trends over time with intuitive visualizations.</p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">🎯</span>
+            <h3>Precision Tracking</h3>
+            <p>Monitor key parameters including voltage, temperature, cycle count, and speed with millisecond accuracy.</p>
+        </div>
+        
+        <div class="feature-card">
+            <span class="feature-icon">🔒</span>
+            <h3>Secure & Private</h3>
+            <p>Enterprise-grade security with encrypted data storage and complete privacy control over your battery metrics.</p>
+        </div>
+    </div>
+</section>
+
+<section class="stats">
+    <div class="stats-grid">
+        <div class="stat-item">
+            <h3>99.2%</h3>
+            <p>Prediction Accuracy</p>
+        </div>
+        
+        <div class="stat-item">
+            <h3>10K+</h3>
+            <p>Batteries Monitored</p>
+        </div>
+        
+        <div class="stat-item">
+            <h3>24/7</h3>
+            <p>Real-time Analysis</p>
+        </div>
+        
+        <div class="stat-item">
+            <h3>50+</h3>
+            <p>EV Models Supported</p>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2>Ready to Optimize Your Battery?</h2>
+    <p>Join thousands of EV owners who trust our AI-powered platform for superior battery management and extended vehicle lifespan.</p>
+    <a href="{{ url_for('register') }}" class="btn btn-primary">Get Started Now</a>
+</section>
+{% endblock %}
+

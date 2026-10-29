@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}Prediction Result - EV Battery Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        padding: 3rem 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    .result-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.6s ease;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .result-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Main Result Card */
+    .main-result {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 157, 0.2);
+        border-radius: 24px;
+        padding: 3rem;
+        margin-bottom: 2rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        animation: scaleIn 0.8s ease;
+    }
+    
+    @keyframes scaleIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    .main-result::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(0, 255, 157, 0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+    
+    @keyframes rotate {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    .main-result > * {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Speedometer */
+    .speedometer-container {
+        width: 350px;
+        height: 350px;
+        margin: 0 auto 2rem;
+        position: relative;
+    }
+    
+    .speedometer {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+    
+    .speedometer-bg {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(
+            from 180deg,
+            var(--error) 0deg,
+            var(--warning) 120deg,
+            var(--success) 240deg,
+            var(--primary) 360deg
+        );
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 0 60px rgba(0, 255, 157, 0.3);
+    }
+    
+    .speedometer-inner {
+        width: 100%;
+        height: 100%;
+        background: var(--darker);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .needle {
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        width: 4px;
+        height: 45%;
+        background: linear-gradient(to top, var(--primary), transparent);
+        transform-origin: bottom center;
+        transform: translateX(-50%) rotate({{ (prediction.battery_health / 100 * 180) - 90 }}deg);
+        border-radius: 2px 2px 0 0;
+        animation: needleSwing 2s ease-out;
+        box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
+    }
+    
+    @keyframes needleSwing {
+        0% { transform: translateX(-50%) rotate(-90deg); }
+        100% { transform: translateX(-50%) rotate({{ (prediction.battery_health / 100 * 180) - 90 }}deg); }
+    }
+    
+    .needle::before {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 16px;
+        height: 16px;
+        background: var(--primary);
+        border-radius: 50%;
+        box-shadow: 0 0 20px rgba(0, 255, 157, 0.8);
+    }
+    
+    .health-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 4rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0.5rem;
+        animation: countUp 2s ease-out;
+    }
+    
+    @keyframes countUp {
+        from { opacity: 0; transform: scale(0.5); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .health-label {
+        font-size: 1.2rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+    
+    .scale-markers {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+    }
+    
+    .marker {
+        position: absolute;
+        width: 2px;
+        height: 15px;
+        background: var(--text);
+        opacity: 0.3;
+        transform-origin: bottom center;
+        bottom: 50%;
+        left: 50%;
+    }
+    
+    /* Secondary Results */
+    .secondary-results {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .result-card {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 157, 0.2);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        animation: fadeIn 0.8s ease;
+        animation-fill-mode: backwards;
+    }
+    
+    .result-card:nth-child(1) { animation-delay: 0.2s; }
+    .result-card:nth-child(2) { animation-delay: 0.4s; }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .result-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 60px rgba(0, 255, 157, 0.2);
+    }
+    
+    .result-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .result-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--secondary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .result-label {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .state-indicator {
+        display: inline-block;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 1rem 0;
+        animation: pulse 2s ease infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    .state-normal {
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+        border: 2px solid var(--success);
+    }
+    
+    .state-degrading {
+        background: rgba(255, 189, 0, 0.2);
+        color: var(--warning);
+        border: 2px solid var(--warning);
+    }
+    
+    .state-critical {
+        background: rgba(255, 51, 102, 0.2);
+        color: var(--error);
+        border: 2px solid var(--error);
+    }
+    
+    /* Input Parameters */
+    .input-summary {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 212, 255, 0.2);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .input-summary h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--secondary);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+    
+    .input-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .input-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .input-item-label {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .input-item-value {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.2rem;
+        color: var(--text);
+        font-weight: 600;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: var(--darker);
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px rgba(0, 255, 157, 0.4);
+    }
+    
+    .btn-secondary {
+        background: transparent;
+        color: var(--primary);
+        border: 2px solid var(--primary);
+    }
+    
+    .btn-secondary:hover {
+        background: rgba(0, 255, 157, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .speedometer-container {
+            width: 280px;
+            height: 280px;
+        }
+        
+        .health-value {
+            font-size: 3rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="result-header">
+        <h1>Battery Analysis Complete</h1>
+        <p>AI-powered insights for Prediction #{{ prediction.id }}</p>
+    </div>
+    
+    <div class="main-result">
+        <div class="speedometer-container">
+            <div class="speedometer">
+                <div class="speedometer-bg">
+                    <div class="speedometer-inner">
+                        <div class="health-value" id="healthValue">0%</div>
+                        <div class="health-label">Battery Health</div>
+                        <div class="needle"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="state-indicator state-{{ prediction.battery_state.lower() }}">
+            {{ prediction.battery_state }}
+        </div>
+    </div>
+    
+    <div class="secondary-results">
+        <div class="result-card">
+            <span class="result-icon">⏳</span>
+            <div class="result-value" id="rulValue">0</div>
+            <div class="result-label">Remaining Useful Life (Cycles)</div>
+        </div>
+        
+        <div class="result-card">
+            <span class="result-icon">📅</span>
+            <div class="result-value">{{ prediction.created_at.strftime('%H:%M') }}</div>
+            <div class="result-label">Analysis Time</div>
+        </div>
+    </div>
+    
+    <div class="input-summary">
+        <h3>Input Parameters</h3>
+        <div class="input-grid">
+            <div class="input-item">
+                <div class="input-item-label">🔄 Cycle Count</div>
+                <div class="input-item-value">{{ prediction.cycle_count }}</div>
+            </div>
+            
+            <div class="input-item">
+                <div class="input-item-label">🚗 Avg Speed</div>
+                <div class="input-item-value">{{ prediction.avg_speed }} km/h</div>
+            </div>
+            
+            <div class="input-item">
+                <div class="input-item-label">⚡ Avg Voltage</div>
+                <div class="input-item-value">{{ prediction.avg_voltage }} V</div>
+            </div>
+            
+            <div class="input-item">
+                <div class="input-item-label">🌡️ Avg Temperature</div>
+                <div class="input-item-value">{{ prediction.avg_temp }} °C</div>
+            </div>
+            
+            <div class="input-item">
+                <div class="input-item-label">📉 Voltage Drop</div>
+                <div class="input-item-value">{{ prediction.voltage_drop_rate }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-buttons">
+        <a href="{{ url_for('predict') }}" class="btn btn-primary">New Prediction</a>
+        <a href="{{ url_for('analytics') }}" class="btn btn-secondary">View Analytics</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animate health value counting
+    const healthValue = document.getElementById('healthValue');
+    const rulValue = document.getElementById('rulValue');
+    const targetHealth = {{ prediction.battery_health }};
+    const targetRul = {{ prediction.rul_cycles }};
+    
+    let currentHealth = 0;
+    let currentRul = 0;
+    
+    const healthInterval = setInterval(() => {
+        if (currentHealth < targetHealth) {
+            currentHealth += targetHealth / 60;
+            healthValue.textContent = Math.min(Math.round(currentHealth * 10) / 10, targetHealth) + '%';
+        } else {
+            clearInterval(healthInterval);
+            healthValue.textContent = targetHealth + '%';
+        }
+    }, 30);
+    
+    const rulInterval = setInterval(() => {
+        if (currentRul < targetRul) {
+            currentRul += targetRul / 60;
+            rulValue.textContent = Math.min(Math.round(currentRul), targetRul);
+        } else {
+            clearInterval(rulInterval);
+            rulValue.textContent = targetRul;
+        }
+    }, 30);
+</script>
+{% endblock %}
+

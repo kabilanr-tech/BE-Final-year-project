@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+
+{% block title %}Battery Prediction - EV Battery Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .predict-container {
+        padding: 3rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .predict-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.6s ease;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .predict-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .predict-header p {
+        color: var(--text-dim);
+        font-size: 1.1rem;
+    }
+    
+    .predict-form {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 255, 157, 0.2);
+        border-radius: 24px;
+        padding: 3rem;
+        box-shadow: var(--shadow-elevation);
+        animation: slideIn 0.6s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.75rem;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .form-group .label-icon {
+        margin-right: 0.5rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 1.2rem 1.5rem;
+        background: rgba(26, 33, 64, 0.6);
+        border: 2px solid rgba(0, 255, 157, 0.2);
+        border-radius: 12px;
+        color: var(--text);
+        font-size: 1.1rem;
+        font-family: 'Syne', sans-serif;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(0, 255, 157, 0.1);
+        background: rgba(26, 33, 64, 0.8);
+    }
+    
+    .form-control::placeholder {
+        color: var(--text-dim);
+        opacity: 0.5;
+    }
+    
+    .input-hint {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-dim);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .sample-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        padding: 1.5rem;
+        background: rgba(0, 255, 157, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(0, 255, 157, 0.1);
+    }
+    
+    .sample-btn {
+        padding: 0.75rem 1.5rem;
+        background: rgba(26, 33, 64, 0.6);
+        border: 1px solid rgba(0, 255, 157, 0.3);
+        border-radius: 8px;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Syne', sans-serif;
+        font-weight: 500;
+    }
+    
+    .sample-btn:hover {
+        background: rgba(0, 255, 157, 0.2);
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+    
+    .btn-predict {
+        width: 100%;
+        padding: 1.5rem;
+        font-size: 1.2rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        color: var(--darker);
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 2px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-predict::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+    
+    .btn-predict:hover::before {
+        left: 100%;
+    }
+    
+    .btn-predict:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 50px rgba(0, 255, 157, 0.5);
+    }
+    
+    .btn-predict:active {
+        transform: translateY(0);
+    }
+    
+    .info-card {
+        background: rgba(0, 212, 255, 0.1);
+        border: 1px solid rgba(0, 212, 255, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .info-card h3 {
+        color: var(--secondary);
+        font-family: 'Orbitron', sans-serif;
+        margin-bottom: 1rem;
+    }
+    
+    .info-card ul {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .info-card li {
+        padding: 0.5rem 0;
+        color: var(--text-dim);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-card li::before {
+        content: '⚡';
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="predict-container">
+    <div class="predict-header">
+        <h1>Battery Health Prediction</h1>
+        <p>Enter your battery parameters to get AI-powered insights</p>
+    </div>
+    
+    <form method="POST" action="{{ url_for('predict') }}" class="predict-form" id="predictForm">
+        <div class="sample-buttons">
+            <span style="color: var(--text-dim); margin-right: auto;">Quick Fill:</span>
+            <button type="button" class="sample-btn" onclick="fillNormal()">Normal Battery</button>
+            <button type="button" class="sample-btn" onclick="fillDegrading()">Degrading Battery</button>
+        </div>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="cycle_count"><span class="label-icon">🔄</span> Cycle Count</label>
+                <input type="number" class="form-control" id="cycle_count" name="cycle_count" 
+                       placeholder="e.g., 500" required step="0.01" min="0">
+                <div class="input-hint">Number of charge-discharge cycles</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="avg_speed"><span class="label-icon">🚗</span> Average Speed</label>
+                <input type="number" class="form-control" id="avg_speed" name="avg_speed" 
+                       placeholder="e.g., 60" required step="0.01" min="0">
+                <div class="input-hint">Average speed in km/h</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="avg_voltage"><span class="label-icon">⚡</span> Average Voltage</label>
+                <input type="number" class="form-control" id="avg_voltage" name="avg_voltage" 
+                       placeholder="e.g., 230" required step="0.01" min="0">
+                <div class="input-hint">Average voltage in volts</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="avg_temp"><span class="label-icon">🌡️</span> Average Temperature</label>
+                <input type="number" class="form-control" id="avg_temp" name="avg_temp" 
+                       placeholder="e.g., 32" required step="0.01">
+                <div class="input-hint">Average temperature in °C</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="voltage_drop_rate"><span class="label-icon">📉</span> Voltage Drop Rate</label>
+                <input type="number" class="form-control" id="voltage_drop_rate" name="voltage_drop_rate" 
+                       placeholder="e.g., 0.05" required step="0.001" min="0" max="1">
+                <div class="input-hint">Rate of voltage decrease (0-1)</div>
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-predict">⚡ ANALYZE BATTERY</button>
+        
+        <div class="info-card">
+            <h3>💡 What You'll Get</h3>
+            <ul>
+                <li>Real-time battery health percentage</li>
+                <li>Remaining useful life (RUL) in cycles</li>
+                <li>Current battery state classification</li>
+                <li>Visual performance indicators</li>
+            </ul>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function fillNormal() {
+        document.getElementById('cycle_count').value = '150';
+        document.getElementById('avg_speed').value = '50';
+        document.getElementById('avg_voltage').value = '220';
+        document.getElementById('avg_temp').value = '29';
+        document.getElementById('voltage_drop_rate').value = '0.03';
+        
+        // Add animation
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.style.animation = 'none';
+            setTimeout(() => {
+                input.style.animation = 'pulse 0.5s ease';
+            }, 10);
+        });
+    }
+    
+    function fillDegrading() {
+        document.getElementById('cycle_count').value = '500';
+        document.getElementById('avg_speed').value = '60';
+        document.getElementById('avg_voltage').value = '230';
+        document.getElementById('avg_temp').value = '32';
+        document.getElementById('voltage_drop_rate').value = '0.05';
+        
+        // Add animation
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.style.animation = 'none';
+            setTimeout(() => {
+                input.style.animation = 'pulse 0.5s ease';
+            }, 10);
+        });
+    }
+</script>
+
+<style>
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+</style>
+{% endblock %}
+

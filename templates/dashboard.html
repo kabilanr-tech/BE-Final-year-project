@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - EV Battery Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard {
+        padding: 3rem 2rem;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-header {
+        margin-bottom: 3rem;
+        animation: fadeInDown 0.6s ease;
+    }
+    
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .dashboard-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .dashboard-header p {
+        color: var(--text-dim);
+        font-size: 1.1rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .stat-card {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 157, 0.2);
+        border-radius: 20px;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s ease;
+        animation: fadeIn 0.6s ease;
+        animation-fill-mode: backwards;
+    }
+    
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary);
+        box-shadow: 0 20px 60px rgba(0, 255, 157, 0.2);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+    
+    .stat-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+    
+    .action-card {
+        background: linear-gradient(135deg, rgba(0, 255, 157, 0.1), rgba(0, 212, 255, 0.1));
+        border: 1px solid rgba(0, 255, 157, 0.2);
+        border-radius: 16px;
+        padding: 2rem;
+        text-decoration: none;
+        color: var(--text);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .action-card:hover::before {
+        opacity: 1;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 255, 157, 0.3);
+        border-color: var(--primary);
+    }
+    
+    .action-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-card p {
+        color: var(--text-dim);
+        font-size: 0.95rem;
+    }
+    
+    .recent-predictions {
+        background: rgba(19, 24, 41, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 255, 157, 0.2);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .recent-predictions h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8rem;
+        margin-bottom: 1.5rem;
+        color: var(--primary);
+    }
+    
+    .prediction-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .prediction-item {
+        background: rgba(26, 33, 64, 0.4);
+        border: 1px solid rgba(0, 255, 157, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .prediction-item:hover {
+        border-color: var(--primary);
+        background: rgba(26, 33, 64, 0.6);
+    }
+    
+    .prediction-info h4 {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--text);
+        margin-bottom: 0.5rem;
+    }
+    
+    .prediction-meta {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        font-size: 0.9rem;
+        color: var(--text-dim);
+    }
+    
+    .prediction-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .prediction-result {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        justify-content: center;
+    }
+    
+    .health-badge {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 700;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .health-good {
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+        border: 1px solid var(--success);
+    }
+    
+    .health-warning {
+        background: rgba(255, 189, 0, 0.2);
+        color: var(--warning);
+        border: 1px solid var(--warning);
+    }
+    
+    .health-critical {
+        background: rgba(255, 51, 102, 0.2);
+        color: var(--error);
+        border: 1px solid var(--error);
+    }
+    
+    .state-badge {
+        padding: 0.3rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .state-normal {
+        background: rgba(0, 255, 157, 0.2);
+        color: var(--success);
+    }
+    
+    .state-degrading {
+        background: rgba(255, 189, 0, 0.2);
+        color: var(--warning);
+    }
+    
+    .state-critical {
+        background: rgba(255, 51, 102, 0.2);
+        color: var(--error);
+    }
+    
+    .no-predictions {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-dim);
+    }
+    
+    .no-predictions-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+    
+    @media (max-width: 768px) {
+        .prediction-item {
+            grid-template-columns: 1fr;
+        }
+        
+        .prediction-result {
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-header">
+        <h1>Welcome, {{ session.username }}!</h1>
+        <p>Monitor your battery health and performance metrics</p>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span class="stat-icon">📊</span>
+            <div class="stat-value">{{ total_predictions }}</div>
+            <div class="stat-label">Total Predictions</div>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-icon">🔋</span>
+            <div class="stat-value">{{ avg_health }}%</div>
+            <div class="stat-label">Average Health</div>
+        </div>
+        
+        <div class="stat-card">
+            <span class="stat-icon">⚡</span>
+            <div class="stat-value">Active</div>
+            <div class="stat-label">System Status</div>
+        </div>
+    </div>
+    
+    <div class="quick-actions">
+        <a href="{{ url_for('predict') }}" class="action-card">
+            <h3>🎯 New Prediction</h3>
+            <p>Analyze your battery's current state and get AI-powered insights</p>
+        </a>
+        
+        <a href="{{ url_for('analytics') }}" class="action-card">
+            <h3>📈 View Analytics</h3>
+            <p>Explore interactive charts and performance trends</p>
+        </a>
+        
+        <a href="{{ url_for('history') }}" class="action-card">
+            <h3>📋 Prediction History</h3>
+            <p>Review all your past battery assessments</p>
+        </a>
+    </div>
+    
+    <div class="recent-predictions">
+        <h2>Recent Predictions</h2>
+        
+        {% if recent_predictions %}
+            <div class="prediction-list">
+                {% for pred in recent_predictions %}
+                <div class="prediction-item">
+                    <div class="prediction-info">
+                        <h4>Prediction #{{ pred.id }}</h4>
+                        <div class="prediction-meta">
+                            <span>🔄 {{ pred.cycle_count }} cycles</span>
+                            <span>⚡ {{ pred.avg_voltage }}V</span>
+                            <span>🌡️ {{ pred.avg_temp }}°C</span>
+                            <span>📅 {{ pred.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-result">
+                        <div class="health-badge {% if pred.battery_health >= 80 %}health-good{% elif pred.battery_health >= 60 %}health-warning{% else %}health-critical{% endif %}">
+                            {{ pred.battery_health }}%
+                        </div>
+                        <span class="state-badge state-{{ pred.battery_state.lower() }}">
+                            {{ pred.battery_state }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-predictions">
+                <div class="no-predictions-icon">🔋</div>
+                <h3>No predictions yet</h3>
+                <p>Start by making your first battery prediction</p>
+                <br>
+                <a href="{{ url_for('predict') }}" class="btn btn-primary">Make Prediction</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
